@@ -1,0 +1,23 @@
+{
+  "name": "reasonix-browser-bridge",
+  "version": "2.2.0",
+  "description": "Reasonix Browser Bridge MCP server: let Reasonix control the browser via the extension (tabs/cookies/scripting). Chrome & Edge. Open source.",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "reasonix-browser-bridge": "index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["mcp", "browser", "chrome", "edge", "extension", "automation"],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "ws": "^8.18.0",
+    "zod": "^3.24.0"
+  }
+}

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Browser MCP Bridge</title>
+<style>
+  :root { color-scheme: dark; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 300px; font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: #14161a; color: #e8eaed; padding: 14px;
+  }
+  .head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .logo {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: linear-gradient(135deg, #4dabf7, #1971c2);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 17px; color: #fff;
+  }
+  .title { font-size: 14px; font-weight: 600; }
+  .sub { font-size: 11px; color: #9aa0a6; margin-top: 2px; }
+  .status {
+    font-size: 12px; padding: 9px 11px; background: #1e2126; border-radius: 8px;
+    display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .dot.ok { background: #2b8a3e; }
+  .dot.warn { background: #e8590c; }
+  .row { font-size: 11px; color: #9aa0a6; padding: 3px 2px; display: flex; justify-content: space-between; }
+  .hint {
+    margin-top: 10px; font-size: 10px; color: #6f7378; line-height: 1.6;
+    background: #1e2126; border-radius: 8px; padding: 8px 10px;
+  }
+  code { color: #d29922; }
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="logo">R</div>
+    <div>
+      <div class="title">Reasonix Browser Bridge</div>
+      <div class="sub">v<span id="ver">-</span> · 适配 Reasonix 的自动化浏览器插件</div>
+    </div>
+  </div>
+  <div class="status">
+    <span class="dot" id="dot"></span>
+    <span id="bridge">桥接检测中…</span>
+  </div>
+  <div class="row"><span>心跳</span><span id="hb">-</span></div>
+  <div class="row"><span>桥地址</span><span><code>ws://127.0.0.1:8747</code></span></div>
+  <div class="hint">
+    启动 MCP server（<code>npm start</code>）后，本插件会自动连接，Reasonix 即可控制浏览器：
+    标签页、Cookie、脚本注入。
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
