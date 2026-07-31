@@ -1,8 +1,8 @@
 // Reasonix Browser Bridge - 后台 service worker
-// 功能：本地 WebSocket 桥 + 统一浏览器操作网关（tabs/cookies/scripting/...）
-// MCP server 监听 ws://127.0.0.1:8747，插件自动连接，AI 客户端即可控制浏览器。
+// 功能：本地 WebSocket 桥 + 统一浏览器操作网关（tabs/cookies/scripting/screenshot/downloads/proxy/...）
+// MCP server 监听 ws://127.0.0.1:8747，插件自动连接，Reasonix 即可控制浏览器。
 
-const VERSION = "2.2.0";
+const VERSION = "2.3.0";
 const WS_URL = "ws://127.0.0.1:8747";
 const RECONNECT_MS = 3000;
 
@@ -114,6 +114,58 @@ async function handleGateway(type, params = {}) {
       } finally {
         try { await chrome.debugger.detach({ tabId: params.tabId }); } catch (_) {}
       }
+    }
+    // 标签页截图：CDP Page.captureScreenshot，返回 base64
+    case "screenshot": {
+      if (!params.tabId) return { error: "tabId required" };
+      await chrome.debugger.attach({ tabId: params.tabId }, "1.3");
+      try {
+        const r = await chrome.debugger.sendCommand({ tabId: params.tabId }, "Page.captureScreenshot", {
+          format: params.format || "png",
+          quality: params.quality,
+          fromSurface: true
+        });
+        return { result: { data: r.data } };
+      } finally {
+        try { await chrome.debugger.detach({ tabId: params.tabId }); } catch (_) {}
+      }
+    }
+    // 下载
+    case "downloads-download":
+      return { result: await chrome.downloads.download(params.options) };
+    case "downloads-search":
+      return { result: await chrome.downloads.search(params.query || {}) };
+    case "downloads-cancel":
+      return { result: await chrome.downloads.cancel(params.id) };
+    // 代理
+    case "proxy-get":
+      return { result: await chrome.proxy.settings.get(params.details || {}) };
+    case "proxy-set":
+      await chrome.proxy.settings.set({ value: params.value, scope: params.scope || "regular" });
+      return { result: { ok: true } };
+    // 浏览数据清理
+    case "browsingdata-remove":
+      await chrome.browsingData.remove(params.options || {}, params.dataTypes || {});
+      return { result: { ok: true } };
+    // 扩展管理
+    case "management-list":
+      return { result: (await chrome.management.getAll()).map((e) => ({ id: e.id, name: e.name, enabled: e.enabled, type: e.type, installType: e.installType, version: e.version })) };
+    case "management-setEnabled":
+      return { result: await chrome.management.setEnabled(params.id, params.enabled) };
+    // 历史 / 书签
+    case "history-search":
+      return { result: await chrome.history.search(params.query) };
+    case "bookmarks-list":
+      return { result: await chrome.bookmarks.getTree() };
+    // 系统通知
+    case "notify": {
+      await chrome.notifications.create({
+        type: "basic",
+        iconUrl: chrome.runtime.getURL("icons/icon128.png"),
+        title: params.title || "Reasonix Browser Bridge",
+        message: params.message || ""
+      });
+      return { result: { ok: true } };
     }
     case "scripting-insertCSS":
       return { result: await chrome.scripting.insertCSS({ target: { tabId: params.tabId }, css: params.css }) };

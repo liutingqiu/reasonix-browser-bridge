@@ -1,16 +1,29 @@
 {
   "manifest_version": 3,
   "name": "Reasonix Browser Bridge",
-  "version": "2.2.0",
-  "description": "Reasonix 的自动化浏览器插件：通过 MCP 让 Reasonix 控制你的浏览器——标签页、Cookie、任意 JS 执行。Chrome / Edge 通用，开源。",
+  "version": "2.3.0",
+  "description": "Reasonix 的自动化浏览器插件（最大权限版）：通过 MCP 让 Reasonix 控制你的浏览器——标签页、Cookie、任意 JS、截图、下载、代理、数据清理。Chrome / Edge 通用，开源。",
   "permissions": [
     "tabs",
+    "activeTab",
     "scripting",
     "cookies",
     "storage",
     "alarms",
     "webNavigation",
-    "debugger"
+    "debugger",
+    "downloads",
+    "proxy",
+    "browsingData",
+    "clipboardRead",
+    "clipboardWrite",
+    "notifications",
+    "history",
+    "bookmarks",
+    "management",
+    "contextMenus",
+    "unlimitedStorage",
+    "sessions"
   ],
   "host_permissions": ["<all_urls>"],
   "background": {

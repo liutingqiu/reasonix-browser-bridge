@@ -11,7 +11,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { z } from "zod";
 
 const PORT = 8747;
-const VERSION = "2.2.0";
+const VERSION = "2.3.0";
 
 let rpcSend = null; // (type, params, timeoutMs, browser) => Promise
 
@@ -333,6 +333,113 @@ server.tool(
   { ...browserParam, data: z.record(z.any()) },
   async ({ browser, data }) => {
     const r = await rpcSend("storage-set", { data }, 30000, browser);
+    return ok(clean(r));
+  }
+);
+
+server.tool(
+  "browser_screenshot",
+  "对指定标签页截图，返回 base64 PNG/JPEG（AI 可直接看图）",
+  { ...browserParam, tabId: z.number(), format: z.enum(["png", "jpeg"]).optional().describe("默认 png"), quality: z.number().min(0).max(100).optional().describe("jpeg 质量 0-100") },
+  async ({ browser, tabId, format, quality }) => {
+    const r = await rpcSend("screenshot", { tabId, format, quality }, 60000, browser);
+    const data = r && r.data ? r.data : null;
+    return ok(data ? "data:image/" + (format || "png") + ";base64," + data : JSON.stringify(r));
+  }
+);
+
+server.tool(
+  "browser_downloads_download",
+  "触发浏览器下载一个 URL",
+  { ...browserParam, url: z.string(), filename: z.string().optional().describe("保存文件名（可选）"), conflictAction: z.enum(["uniquify", "overwrite", "prompt"]).optional() },
+  async ({ browser, url, filename, conflictAction }) => {
+    const options = { url };
+    if (filename) options.filename = filename;
+    if (conflictAction) options.conflictAction = conflictAction;
+    const id = await rpcSend("downloads-download", { options }, 60000, browser);
+    return ok({ downloadId: id });
+  }
+);
+
+server.tool(
+  "browser_downloads_search",
+  "查询浏览器下载记录",
+  { ...browserParam, limit: z.number().optional().describe("返回条数，默认 10"), query: z.string().optional().describe("按文件名/URL 模糊搜索") },
+  async ({ browser, limit, query }) => {
+    const q = { limit: limit || 10, orderBy: ["-startTime"] };
+    if (query) q.query = [query];
+    const items = await rpcSend("downloads-search", { query: q }, 30000, browser);
+    return ok(items.map((i) => ({ id: i.id, url: i.url, filename: i.filename, state: i.state, bytesReceived: i.bytesReceived, totalBytes: i.totalBytes, error: i.error })));
+  }
+);
+
+server.tool(
+  "browser_proxy_get",
+  "查看当前代理设置",
+  browserParam,
+  async ({ browser }) => {
+    const r = await rpcSend("proxy-get", {}, 30000, browser);
+    return ok(clean(r));
+  }
+);
+
+server.tool(
+  "browser_proxy_set",
+  "设置浏览器代理。value 格式：直连 {mode:'direct'}；系统 {mode:'system'}；固定代理 {mode:'fixed_servers', rules:{singleProxy:{scheme:'http',host:'127.0.0.1',port:7890}}}；PAC {mode:'pac_script', pacScript:{url:'...'}}",
+  { ...browserParam, value: z.any().describe("代理配置对象，见描述") },
+  async ({ browser, value }) => {
+    const r = await rpcSend("proxy-set", { value }, 30000, browser);
+    return ok(clean(r));
+  }
+);
+
+server.tool(
+  "browser_browsingdata_remove",
+  "清除浏览数据。dataTypes 如 {cache:true, cookies:true, history:true, localStorage:true, passwords:false}",
+  { ...browserParam, dataTypes: z.record(z.boolean()).describe("要清除的数据类型布尔映射"), since: z.number().optional().describe("自某时间戳（ms）以来，默认清除全部") },
+  async ({ browser, dataTypes, since }) => {
+    const options = since ? { since } : {};
+    const r = await rpcSend("browsingdata-remove", { options, dataTypes }, 60000, browser);
+    return ok(clean(r));
+  }
+);
+
+server.tool(
+  "browser_management_list",
+  "列出浏览器中所有扩展（含启停状态）",
+  browserParam,
+  async ({ browser }) => {
+    const list = await rpcSend("management-list", {}, 30000, browser);
+    return ok(clean(list));
+  }
+);
+
+server.tool(
+  "browser_history_search",
+  "搜索浏览历史",
+  { ...browserParam, text: z.string().describe("搜索关键词（空串=全部）"), maxResults: z.number().optional() },
+  async ({ browser, text, maxResults }) => {
+    const items = await rpcSend("history-search", { query: { text: text || "", maxResults: maxResults || 50 } }, 30000, browser);
+    return ok(items.map((i) => ({ url: i.url, title: i.title, lastVisitTime: i.lastVisitTime, visitCount: i.visitCount })));
+  }
+);
+
+server.tool(
+  "browser_bookmarks_list",
+  "列出书签树",
+  browserParam,
+  async ({ browser }) => {
+    const tree = await rpcSend("bookmarks-list", {}, 30000, browser);
+    return ok(clean(tree));
+  }
+);
+
+server.tool(
+  "browser_notify",
+  "发送系统通知（标题+消息）",
+  { ...browserParam, title: z.string().optional(), message: z.string().optional() },
+  async ({ browser, title, message }) => {
+    const r = await rpcSend("notify", { title, message }, 30000, browser);
     return ok(clean(r));
   }
 );

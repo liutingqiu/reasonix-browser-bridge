@@ -31,6 +31,14 @@ Reasonix 的自动化浏览器插件（开源）—— 通过 MCP 让 Reasonix �
 | `browser_tabs_reload` | Reload a tab |
 | `browser_cookies_getAll` / `get` / `set` / `remove` | Full cookie access |
 | `browser_script_execute` | Run **arbitrary JavaScript** on any page via CDP (bypasses page CSP) |
+| `browser_screenshot` | Screenshot a tab (base64 PNG/JPEG, AI can see the page) |
+| `browser_downloads_download` / `search` | Trigger / query downloads |
+| `browser_proxy_get` / `set` | Read / switch proxy settings (direct / system / fixed / PAC) |
+| `browser_browsingdata_remove` | Clear cache / cookies / history / localStorage ... |
+| `browser_management_list` | List all installed extensions (with enabled state) |
+| `browser_history_search` | Search browsing history |
+| `browser_bookmarks_list` | Read bookmark tree |
+| `browser_notify` | System notification |
 | `browser_webnav_frames` | List iframes of a tab |
 | `browser_storage_get` / `set` | Read/write the extension's local storage |
 
@@ -92,7 +100,7 @@ document.title
 
 - The WebSocket bridge binds to **127.0.0.1 only**; the extension only connects to localhost.
 - No remote access, no native messaging, no registry changes.
-- The extension requests `tabs`, `cookies`, `scripting`, `debugger`, `webNavigation`, `storage`, `alarms` + `<all_urls>` host permission — install it only if you trust this project.
+- The extension requests **full permissions** (tabs, cookies, scripting, debugger, downloads, proxy, browsingData, management, history, bookmarks, clipboard, notifications, ... + `<all_urls>`) — it is designed as Reasonix's automation bridge, so it can do anything the browser can. Install it only if you trust this project.
 
 ## Project layout
 
