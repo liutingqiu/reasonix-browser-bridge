@@ -1,9 +1,6 @@
 # Reasonix Browser Bridge
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Manifest V3](https://img.shields.io/badge/manifest-v3-brightgreen.svg)](extension/manifest.json)
-
-Reasonix's open-source browser automation extension — let Reasonix control your browser directly through MCP: tabs, cookies, arbitrary JavaScript, screenshots, downloads, proxy, and data cleanup. Works with **Chrome and Edge**.
+Reasonix 的自动化浏览器插件（开源）—— 通过 MCP 让 Reasonix 直接控制你的浏览器：标签页、Cookie、任意 JavaScript 执行。Chrome / Edge 通用。
 
 ```
 ┌─────────────┐   stdio / MCP   ┌──────────────────┐   WebSocket    ┌───────────────┐
@@ -19,7 +16,7 @@ Reasonix's open-source browser automation extension — let Reasonix control you
 
 - **Extension** (`extension/`): Manifest V3, connects to `ws://127.0.0.1:8747`, auto-reconnects. Install once per browser (Chrome and Edge).
 - **MCP Server** (`server/`): stdio MCP server that bridges to the extension and exposes browser tools.
-- **No special flags** needed to launch the browser — no `--remote-debugging-port`, no native host, no registry setup. Install the extension, run the server, done.
+- **No special flags** needed to launch the browser — no `--remote-debugging-port`, no native host / registry setup. Install the extension, run the server, done.
 
 ## Features / Tools
 
@@ -34,6 +31,7 @@ Reasonix's open-source browser automation extension — let Reasonix control you
 | `browser_tabs_reload` | Reload a tab |
 | `browser_cookies_getAll` / `get` / `set` / `remove` | Full cookie access |
 | `browser_script_execute` | Run **arbitrary JavaScript** on any page via CDP (bypasses page CSP) |
+| `browser_script_execute_batch` | Run multiple JS snippets in ONE debugger attach (fewer toolbar flashes) |
 | `browser_screenshot` | Screenshot a tab (base64 PNG/JPEG, AI can see the page) |
 | `browser_downloads_download` / `search` | Trigger / query downloads |
 | `browser_proxy_get` / `set` | Read / switch proxy settings (direct / system / fixed / PAC) |
@@ -45,6 +43,8 @@ Reasonix's open-source browser automation extension — let Reasonix control you
 | `browser_webnav_frames` | List iframes of a tab |
 | `browser_storage_get` / `set` | Read/write the extension's local storage |
 
+**Auto-update check**: the extension checks GitHub Releases every 12h (and on browser start). When a new version is published you'll get a system notification, an orange **↑** badge on the toolbar icon, and a "Download" button in the popup — no store required (works for Developer-mode installs).
+
 **Multi-browser**: Chrome and Edge are both supported. Install the extension in each browser you want to control — every instance auto-connects to the bridge. Most tools accept an optional `browser` parameter (`"chrome"` / `"edge"`) to target a specific browser; when only one browser is connected it is used automatically, and when several are connected without a `browser` argument the server tells you to specify one.
 
 ## Install
@@ -53,7 +53,7 @@ Reasonix's open-source browser automation extension — let Reasonix control you
 
 1. Open `chrome://extensions` (Chrome) or `edge://extensions` (Edge).
 2. Enable **Developer mode**.
-3. Click **Load unpacked** and select the `extension/` folder.
+3. Click **Load unpacked** / **加载未打包的扩展程序** and select the `extension/` folder.
 4. Pin it if you like — the icon shows bridge status (green **M** = connected).
 
 > Note: Chrome 137+ blocks the `--load-extension` command-line flag on branded builds; the developer-mode UI install above is the supported way. The same extension folder works in both browsers (same extension ID).
@@ -66,7 +66,7 @@ npm install
 npm start
 ```
 
-You should see `✅ plugin connected` (or `plugin connected`) once the extension auto-connects.
+You should see `✅ 插件已连接 / plugin connected` once the extension auto-connects.
 
 ### 3. Configure your MCP client
 
@@ -108,7 +108,7 @@ document.title
 ## Project layout
 
 ```
-reasonix-browser-bridge/
+browser-mcp-bridge/
 ├── extension/      # MV3 browser extension
 │   ├── manifest.json
 │   ├── background.js   # WS bridge + browser gateway
@@ -118,7 +118,6 @@ reasonix-browser-bridge/
 ├── server/         # MCP server (Node)
 │   ├── index.js
 │   └── package.json
-├── tools/          # dev/install helper scripts
 ├── README.md
 └── LICENSE
 ```
@@ -126,9 +125,3 @@ reasonix-browser-bridge/
 ## License
 
 MIT
-
----
-
-## Author
-
-Built by [liutingqiu](https://github.com/liutingqiu) — AI-driven independent developer & open-source maker. More tools and resources on my [GitHub profile](https://github.com/liutingqiu).

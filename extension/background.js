@@ -1,8 +1,12 @@
 // Reasonix Browser Bridge - 后台 service worker
 // 功能：本地 WebSocket 桥 + 统一浏览器操作网关（tabs/cookies/scripting/screenshot/downloads/proxy/...）
 // MCP server 监听 ws://127.0.0.1:8747，插件自动连接，Reasonix 即可控制浏览器。
+// 更新检查：定时查 GitHub Release，有新版弹通知 + 徽章提示。
 
-const VERSION = "2.3.1";
+const VERSION = "2.4.0";
+const REPO = "liutingqiu/reasonix-browser-bridge";
+const UPDATE_API = "https://api.github.com/repos/" + REPO + "/releases/latest";
+const RELEASE_URL = "https://github.com/" + REPO + "/releases";
 const WS_URL = "ws://127.0.0.1:8747";
 const RECONNECT_MS = 3000;
 
@@ -10,18 +14,65 @@ const RECONNECT_MS = 3000;
 chrome.runtime.onInstalled.addListener(() => {
   chrome.alarms.create("bmb-heartbeat", { periodInMinutes: 5 });
   chrome.alarms.create("bmb-reconnect", { periodInMinutes: 1 });
+  chrome.alarms.create("bmb-update-check", { periodInMinutes: 720 }); // 每 12 小时检查更新
   heartbeat();
   connectWS();
+  checkForUpdate();
 });
 chrome.runtime.onStartup.addListener(() => {
   heartbeat();
   connectWS();
+  checkForUpdate();
 });
 chrome.alarms.onAlarm.addListener((a) => {
   if (a.name === "bmb-heartbeat") heartbeat();
   // 兜底重连：SW 休眠会挂起 setTimeout，alarms 可唤醒 SW 检查连接
   if (a.name === "bmb-reconnect") ensureConnected();
+  if (a.name === "bmb-update-check") checkForUpdate();
 });
+
+// ---------- 版本对比（a 比 b 大返回 1，小返回 -1，等返回 0） ----------
+function compareVersions(a, b) {
+  const pa = String(a).replace(/^v/, "").split(".").map(Number);
+  const pb = String(b).replace(/^v/, "").split(".").map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const x = pa[i] || 0, y = pb[i] || 0;
+    if (x !== y) return x > y ? 1 : -1;
+  }
+  return 0;
+}
+
+// ---------- 更新检查（GitHub Release） ----------
+async function checkForUpdate() {
+  try {
+    const res = await fetch(UPDATE_API, { headers: { "Accept": "application/vnd.github+json" } });
+    if (!res.ok) return;
+    const rel = await res.json();
+    const latest = String(rel.tag_name || "").replace(/^v/, "");
+    if (!latest) return;
+    const hasUpdate = compareVersions(latest, VERSION) > 0;
+    await chrome.storage.local.set({
+      update: {
+        available: hasUpdate,
+        latest,
+        current: VERSION,
+        url: rel.html_url || RELEASE_URL,
+        checkedAt: Date.now()
+      }
+    });
+    setBadge();
+    if (hasUpdate) {
+      try {
+        await chrome.notifications.create("bmb-update", {
+          type: "basic",
+          iconUrl: chrome.runtime.getURL("icons/icon128.png"),
+          title: "Reasonix Browser Bridge 有更新",
+          message: "发现新版本 v" + latest + "（当前 v" + VERSION + "），点击查看并下载。"
+        });
+      } catch (_) {}
+    }
+  } catch (_) {}
+}
 
 async function heartbeat() {
   const now = Date.now();
@@ -30,12 +81,16 @@ async function heartbeat() {
   await chrome.storage.local.set({ heartbeat: { ts: now, gapMin, version: VERSION } });
 }
 
-// ---------- 徽章：显示桥接状态 ----------
+// ---------- 徽章：显示桥接状态 / 更新提示 ----------
 async function setBadge() {
   const connected = ws && ws.readyState === WebSocket.OPEN;
   const hb = (await chrome.storage.local.get("heartbeat")).heartbeat;
+  const upd = (await chrome.storage.local.get("update")).update || null;
   const minAgo = hb ? Math.round((Date.now() - hb.ts) / 60000) : 99;
-  if (connected) {
+  if (upd && upd.available) {
+    chrome.action.setBadgeText({ text: "↑" });
+    chrome.action.setBadgeBackgroundColor({ color: "#e8590c" });
+  } else if (connected) {
     chrome.action.setBadgeText({ text: "M" });
     chrome.action.setBadgeBackgroundColor({ color: "#2b8a3e" });
   } else if (minAgo <= 15) {
@@ -51,7 +106,13 @@ async function setBadge() {
 async function handleGateway(type, params = {}) {
   switch (type) {
     case "get-state":
-      return { result: { version: VERSION, heartbeat: (await chrome.storage.local.get("heartbeat")).heartbeat || null, connected: !!(ws && ws.readyState === WebSocket.OPEN) } };
+      return { result: { version: VERSION, heartbeat: (await chrome.storage.local.get("heartbeat")).heartbeat || null, connected: !!(ws && ws.readyState === WebSocket.OPEN), update: (await chrome.storage.local.get("update")).update || null } };
+
+    case "update-check":
+      await checkForUpdate();
+      return { result: (await chrome.storage.local.get("update")).update || { available: false, latest: VERSION, current: VERSION } };
+    case "update-state":
+      return { result: (await chrome.storage.local.get("update")).update || null };
 
     case "tabs-list": {
       const tabs = await chrome.tabs.query(params.query || {});

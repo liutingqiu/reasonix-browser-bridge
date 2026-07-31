@@ -34,6 +34,7 @@ Reasonix 的自动化浏览器插件（开源）—— 通过 MCP 让 Reasonix �
 | `browser_tabs_reload` | 刷新标签页 |
 | `browser_cookies_getAll` / `get` / `set` / `remove` | Cookie 全量读写 |
 | `browser_script_execute` | 在任意页面执行**任意 JavaScript**（CDP 通道，绕过页面 CSP） |
+| `browser_script_execute_batch` | 一次 attach 批量执行多条 JS（减少调试提示条闪烁） |
 | `browser_screenshot` | 标签页截图（base64 PNG/JPEG，AI 可直接看图） |
 | `browser_downloads_download` / `search` | 触发 / 查询下载 |
 | `browser_proxy_get` / `set` | 读取 / 切换代理（直连 / 系统 / 固定 / PAC） |
@@ -44,6 +45,8 @@ Reasonix 的自动化浏览器插件（开源）—— 通过 MCP 让 Reasonix �
 | `browser_notify` | 系统通知 |
 | `browser_webnav_frames` | 列出标签页的所有 iframe |
 | `browser_storage_get` / `set` | 读写插件本地存储 |
+
+**自动更新检查**：插件每 12 小时（及浏览器启动时）检查 GitHub Release。发布新版本后，用户会收到系统通知、工具栏图标出现橙色 **↑** 徽章、popup 里出现「前往下载」按钮——开发者模式安装也能用，无需商店。
 
 **多浏览器**：Chrome 和 Edge 都支持。想控制哪个浏览器就在哪个浏览器装一次插件——每个实例都会自动连上桥。大多数工具支持可选 `browser` 参数（`"chrome"` / `"edge"`）指定目标浏览器；只连了一个浏览器时自动使用，连了多个又没指定时会提示你指定。
 

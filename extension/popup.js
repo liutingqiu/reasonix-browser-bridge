@@ -18,6 +18,30 @@ chrome.runtime.sendMessage({ type: "get-state" }, (res) => {
   } else {
     document.getElementById("hb").textContent = "-";
   }
+  renderUpdate(s.update);
+});
+
+function renderUpdate(upd) {
+  const el = document.getElementById("upd");
+  const relBtn = document.getElementById("btnRel");
+  if (!upd) { el.textContent = "未检查"; return; }
+  if (upd.available) {
+    el.textContent = "有新版 v" + upd.latest + " ⬆";
+    relBtn.style.display = "block";
+    relBtn.onclick = () => { if (upd.url) chrome.tabs.create({ url: upd.url }); };
+  } else {
+    el.textContent = "已是最新（v" + upd.current + "）";
+    relBtn.style.display = "none";
+  }
+}
+
+document.getElementById("btnUpd").addEventListener("click", () => {
+  const el = document.getElementById("upd");
+  el.textContent = "检查中…";
+  chrome.runtime.sendMessage({ type: "update-check" }, (res) => {
+    if (chrome.runtime.lastError || !res || !res.result) { el.textContent = "检查失败"; return; }
+    renderUpdate(res.result);
+  });
 });
 
 function setUnknown() {
