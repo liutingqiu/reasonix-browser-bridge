@@ -1,6 +1,9 @@
 # Reasonix Browser Bridge
 
-Reasonix 的自动化浏览器插件（开源）—— 通过 MCP 让 Reasonix 直接控制你的浏览器：标签页、Cookie、任意 JavaScript 执行。Chrome / Edge 通用。
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Manifest V3](https://img.shields.io/badge/manifest-v3-brightgreen.svg)](extension/manifest.json)
+
+Reasonix's open-source browser automation extension — let Reasonix control your browser directly through MCP: tabs, cookies, arbitrary JavaScript, screenshots, downloads, proxy, and data cleanup. Works with **Chrome and Edge**.
 
 ```
 ┌─────────────┐   stdio / MCP   ┌──────────────────┐   WebSocket    ┌───────────────┐
@@ -16,7 +19,7 @@ Reasonix 的自动化浏览器插件（开源）—— 通过 MCP 让 Reasonix �
 
 - **Extension** (`extension/`): Manifest V3, connects to `ws://127.0.0.1:8747`, auto-reconnects. Install once per browser (Chrome and Edge).
 - **MCP Server** (`server/`): stdio MCP server that bridges to the extension and exposes browser tools.
-- **No special flags** needed to launch the browser — no `--remote-debugging-port`, no native host / registry setup. Install the extension, run the server, done.
+- **No special flags** needed to launch the browser — no `--remote-debugging-port`, no native host, no registry setup. Install the extension, run the server, done.
 
 ## Features / Tools
 
@@ -50,7 +53,7 @@ Reasonix 的自动化浏览器插件（开源）—— 通过 MCP 让 Reasonix �
 
 1. Open `chrome://extensions` (Chrome) or `edge://extensions` (Edge).
 2. Enable **Developer mode**.
-3. Click **Load unpacked** / **加载未打包的扩展程序** and select the `extension/` folder.
+3. Click **Load unpacked** and select the `extension/` folder.
 4. Pin it if you like — the icon shows bridge status (green **M** = connected).
 
 > Note: Chrome 137+ blocks the `--load-extension` command-line flag on branded builds; the developer-mode UI install above is the supported way. The same extension folder works in both browsers (same extension ID).
@@ -63,7 +66,7 @@ npm install
 npm start
 ```
 
-You should see `✅ 插件已连接 / plugin connected` once the extension auto-connects.
+You should see `✅ plugin connected` (or `plugin connected`) once the extension auto-connects.
 
 ### 3. Configure your MCP client
 
@@ -105,7 +108,7 @@ document.title
 ## Project layout
 
 ```
-browser-mcp-bridge/
+reasonix-browser-bridge/
 ├── extension/      # MV3 browser extension
 │   ├── manifest.json
 │   ├── background.js   # WS bridge + browser gateway
@@ -115,6 +118,7 @@ browser-mcp-bridge/
 ├── server/         # MCP server (Node)
 │   ├── index.js
 │   └── package.json
+├── tools/          # dev/install helper scripts
 ├── README.md
 └── LICENSE
 ```
