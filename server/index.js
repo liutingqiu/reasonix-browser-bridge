@@ -11,7 +11,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { z } from "zod";
 
 const PORT = 8747;
-const VERSION = "2.3.0";
+const VERSION = "2.3.1";
 
 let rpcSend = null; // (type, params, timeoutMs, browser) => Promise
 
@@ -303,6 +303,16 @@ server.tool(
   { ...browserParam, tabId: z.number().describe("目标标签页 ID，可用 browser_tabs_list 获取"), code: z.string().describe("要执行的 JS 表达式/语句（不能写 return，直接写表达式；异步用 IIFE：(async () => { await ...; return x })()）"), awaitPromise: z.boolean().optional().describe("代码返回 Promise 时设 true 等待其 resolve（默认 false）") },
   async ({ browser, tabId, code, awaitPromise }) => {
     const res = await rpcSend("scripting-eval", { tabId, code, awaitPromise }, 60000, browser);
+    return ok(clean(res));
+  }
+);
+
+server.tool(
+  "browser_script_execute_batch",
+  "在指定标签页一次 attach 批量执行多条 JS（只闪烁一次调试提示条，减少主题闪变）；scripts 为字符串数组或 {code, awaitPromise} 对象数组",
+  { ...browserParam, tabId: z.number(), scripts: z.array(z.union([z.string(), z.object({ code: z.string(), awaitPromise: z.boolean().optional() })])).describe("要执行的脚本列表，顺序执行，返回每条结果") },
+  async ({ browser, tabId, scripts }) => {
+    const res = await rpcSend("scripting-eval-batch", { tabId, scripts }, 120000, browser);
     return ok(clean(res));
   }
 );

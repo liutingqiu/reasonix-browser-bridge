@@ -2,7 +2,7 @@
 // 功能：本地 WebSocket 桥 + 统一浏览器操作网关（tabs/cookies/scripting/screenshot/downloads/proxy/...）
 // MCP server 监听 ws://127.0.0.1:8747，插件自动连接，Reasonix 即可控制浏览器。
 
-const VERSION = "2.3.0";
+const VERSION = "2.3.1";
 const WS_URL = "ws://127.0.0.1:8747";
 const RECONNECT_MS = 3000;
 
@@ -111,6 +111,27 @@ async function handleGateway(type, params = {}) {
           awaitPromise: !!params.awaitPromise
         });
         return { result: { result: r.result ? r.result.value : null, exceptionDetails: r.exceptionDetails || null } };
+      } finally {
+        try { await chrome.debugger.detach({ tabId: params.tabId }); } catch (_) {}
+      }
+    }
+    // 批量 JS 执行：一次 attach 跑完多条（减少调试提示条闪烁/主题闪变）
+    case "scripting-eval-batch": {
+      if (!params.tabId) return { error: "tabId required" };
+      if (!Array.isArray(params.scripts) || !params.scripts.length) return { error: "scripts required" };
+      await chrome.debugger.attach({ tabId: params.tabId }, "1.3");
+      try {
+        const results = [];
+        for (const s of params.scripts) {
+          const item = typeof s === "string" ? { code: s } : s;
+          const r = await chrome.debugger.sendCommand({ tabId: params.tabId }, "Runtime.evaluate", {
+            expression: item.code,
+            returnByValue: true,
+            awaitPromise: !!item.awaitPromise
+          });
+          results.push({ result: r.result ? r.result.value : null, exceptionDetails: r.exceptionDetails || null });
+        }
+        return { result: results };
       } finally {
         try { await chrome.debugger.detach({ tabId: params.tabId }); } catch (_) {}
       }
