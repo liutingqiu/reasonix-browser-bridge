@@ -126,3 +126,9 @@ reasonix-browser-bridge/
 ## License
 
 MIT
+
+---
+
+## Author
+
+Built by [liutingqiu](https://github.com/liutingqiu) — AI-driven independent developer & open-source maker. More tools and resources on my [GitHub profile](https://github.com/liutingqiu).
